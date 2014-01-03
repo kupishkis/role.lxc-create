@@ -1,5 +1,6 @@
 ---
 - name: create a temporary configuration
+  sudo: true
   template: src=configuration.j2 dest=/tmp/lxc-{{lxc_container.name}}.conf
 
 - name: create a container
@@ -40,6 +41,7 @@
   file: path=/etc/lxc/auto/{{lxc_container.name}} src=/var/lib/lxc/{{lxc_container.name}}/config state=link
 
 - name: ensure a key is injected to the machine
+  sudo: true
   authorized_key: >
     user=root
     path='/var/lib/lxc/{{lxc_container.name}}/rootfs/root/.ssh/authorized_keys'
