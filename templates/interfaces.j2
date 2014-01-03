@@ -1,0 +1,16 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# {{ansible_managed}}
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+    address         {{lxc_container.ip}}
+    netmask         {{lxc_container.netmask}}
+    network         {{lxc_container.network}}
+    broadcast       {{lxc_container.broadcast}}
+    gateway         {{lxc_container.gateway}}

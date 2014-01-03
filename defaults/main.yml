@@ -1,0 +1,5 @@
+---
+lxc_container:
+  name: test
+  os: debian
+  ip: 10.0.2.20

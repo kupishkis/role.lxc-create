@@ -1,0 +1,48 @@
+---
+- name: create a temporary configuration
+  template: src=configuration.j2 dest=/tmp/lxc-{{lxc_container.name}}.conf
+
+- name: create a container
+  sudo: true
+  shell: lxc-create -n {{lxc_container.name}} -t {{lxc_container.os}} -f /tmp/lxc-{{lxc_container.name}}.conf
+
+- name: replace containers network config
+  sudo: true
+  template: src=interfaces.j2 dest=/var/lib/lxc/{{lxc_container.name}}/rootfs/etc/network/interfaces
+
+- name: start a container
+  sudo: true
+  shell: lxc-start -n {{lxc_container.name}} -d
+  when: start is defined and start
+
+- name: setup ssh forward rule
+  sudo: true
+  shell: >
+    iptables -t nat -D PREROUTING -i {{lxc_host.interface}} -p tcp --dport {{lxc_container.ssh_port}} -j DNAT --to {{lxc_container.ip}}:22;
+    iptables -t nat -A PREROUTING -i {{lxc_host.interface}} -p tcp --dport {{lxc_container.ssh_port}} -j DNAT --to {{lxc_container.ip}}:22;
+    iptables -D FORWARD -p tcp -d {{lxc_container.ip}} --dport {{lxc_container.ssh_port}} -j ACCEPT;
+    iptables -A FORWARD -p tcp -d {{lxc_container.ip}} --dport {{lxc_container.ssh_port}} -j ACCEPT;
+  notify: save iptables
+
+- name: append new forwarding rules
+  sudo: true
+  shell: >
+    iptables -t nat -D PREROUTING -i {{lxc_host.interface}} -p {{item.protocol}} --dport {{item.source}} -j DNAT --to {{lxc_container.ip}}:{{item.destination}};
+    iptables -t nat -A PREROUTING -i {{lxc_host.interface}} -p {{item.protocol}} --dport {{item.source}} -j DNAT --to {{lxc_container.ip}}:{{item.destination}};
+    iptables -D FORWARD -p {{item.protocol}} -d {{lxc_container.ip}} --dport {{item.source}} -j ACCEPT;
+    iptables -A FORWARD -p {{item.protocol}} -d {{lxc_container.ip}} --dport {{item.source}} -j ACCEPT;
+  when: lxc_container.forwards is defined
+  with_items: lxc_container.forwards
+  notify: save iptables
+
+- name: ensure container will be started on host reboot
+  sudo: true
+  file: path=/etc/lxc/auto/{{lxc_container.name}} src=/var/lib/lxc/{{lxc_container.name}}/config state=link
+
+- name: ensure a key is injected to the machine
+  authorized_key: >
+    user=root
+    path='/var/lib/lxc/{{lxc_container.name}}/rootfs/root/.ssh/authorized_keys'
+    manage_dir=yes
+    key="{{lxc_login_key}}"
+  when: lxc_login_key is defined
