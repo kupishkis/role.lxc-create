@@ -1,11 +1,20 @@
 ---
+- name: check for existing machines
+  sudo: true
+  shell: lxc-ls
+  register: lxc_existing
+
+- debug: var=lxc_existing
+
 - name: create a temporary configuration
   sudo: true
   template: src=configuration.j2 dest=/tmp/lxc-{{lxc_container.name}}.conf
+  when: not lxc_container.name in lxc_existing.stdout_lines
 
 - name: create a container
   sudo: true
   shell: lxc-create -n {{lxc_container.name}} -t {{lxc_container.os}} -f /tmp/lxc-{{lxc_container.name}}.conf
+  when: not lxc_container.name in lxc_existing.stdout_lines
 
 - name: replace containers network config
   sudo: true
