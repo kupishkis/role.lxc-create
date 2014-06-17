@@ -14,3 +14,6 @@ iface eth0 inet static
     network         {{lxc_container.network}}
     broadcast       {{lxc_container.broadcast}}
     gateway         {{lxc_container.gateway}}
+    {% if lxc_container['dns-nameservers'] %}
+    dns-nameservers {{lxc_container['dns-nameservers']}}
+    {% endif %}
