@@ -4,6 +4,10 @@
   shell: lxc-ls
   register: lxc_existing
 
+- name: download ubuntu lxc template
+  sudo: true
+  get_url: url='http://pkg.callcenter.lamoda.ru/lxc/lxc-ubuntu' dest='/usr/share/lxc/templates' mode=0755
+
 - name: create a temporary configuration
   sudo: true
   template: src=configuration.j2 dest=/tmp/lxc-{{lxc_container.name}}.conf
