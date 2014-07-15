@@ -35,10 +35,17 @@
 - name: append new forwarding rules
   sudo: true
   shell: >
+    {% if item.source.start is defined %}
+    iptables -t nat -D PREROUTING -i {{lxc_host.interface}} -p {{item.protocol}} --dport {{item.source.start}}:{{item.source.end}} -j DNAT --to {{lxc_container.ip}}:{{item.destination.start}}-{{item.destination.end}};
+    iptables -t nat -A PREROUTING -i {{lxc_host.interface}} -p {{item.protocol}} --dport {{item.source.start}}:{{item.source.end}} -j DNAT --to {{lxc_container.ip}}:{{item.destination.start}}-{{item.destination.end}};
+    iptables -D FORWARD -p {{item.protocol}} -d {{lxc_container.ip}} --dport {{item.source.start}}:{{item.source.end}} -j ACCEPT;
+    iptables -A FORWARD -p {{item.protocol}} -d {{lxc_container.ip}} --dport {{item.source.start}}:{{item.source.end}} -j ACCEPT;
+    {% else %}
     iptables -t nat -D PREROUTING -i {{lxc_host.interface}} -p {{item.protocol}} --dport {{item.source}} -j DNAT --to {{lxc_container.ip}}:{{item.destination}};
     iptables -t nat -A PREROUTING -i {{lxc_host.interface}} -p {{item.protocol}} --dport {{item.source}} -j DNAT --to {{lxc_container.ip}}:{{item.destination}};
     iptables -D FORWARD -p {{item.protocol}} -d {{lxc_container.ip}} --dport {{item.source}} -j ACCEPT;
     iptables -A FORWARD -p {{item.protocol}} -d {{lxc_container.ip}} --dport {{item.source}} -j ACCEPT;
+    {% endif %}
   when: lxc_container.forwards is defined
   with_items: lxc_container.forwards
   notify: save iptables
