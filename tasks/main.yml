@@ -11,7 +11,17 @@
 
 - name: create a container
   sudo: true
-  shell: lxc-create -n {{lxc_container.name}} -t {{lxc_container.os}} -f /tmp/lxc-{{lxc_container.name}}.conf
+  shell: >
+      lxc-create -n {{lxc_container.name}}
+      -f /tmp/lxc-{{lxc_container.name}}.conf
+      -t download
+      -- --dist {{lxc_container.os}}
+      {% if lxc_container.release is defined %}
+      --release {{lxc_container.release}}
+      {% endif %}
+      {% if lxc_container.arch is defined %}
+      --arch {{lxc_container.arch}}
+      {% endif %}
   when: not lxc_container.name in lxc_existing.stdout_lines
 
 - name: replace containers network config
