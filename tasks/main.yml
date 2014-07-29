@@ -60,10 +60,6 @@
   with_items: lxc_container.forwards
   notify: save iptables
 
-- name: ensure container will be started on host reboot
-  sudo: true
-  file: path=/etc/lxc/auto/{{lxc_container.name}} src=/var/lib/lxc/{{lxc_container.name}}/config state=link
-
 - name: ensure a key is injected to the machine
   sudo: true
   authorized_key: >
